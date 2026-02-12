@@ -1,0 +1,14 @@
+
+#After trimming, check adaptor content with fastQC.
+
+#!/bin/bash
+#PBS -lwalltime=08:00:00
+#PBS -lselect=1:ncpus=128:mem=900gb
+
+module load miniforge/3
+conda activate base
+cd $PBS_O_WORKDIR   #to instruct pbs to run the job in current working directory.
+
+mkdir -p fastqc_output   #make a folder called fastqc_output, -p = don't throw error if the folder already exists
+for file in *.fq do fastqc "$file" -d $TMPDIR -o fastqc_output  
+done
