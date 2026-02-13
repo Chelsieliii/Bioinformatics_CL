@@ -1,0 +1,24 @@
+#alignment for one file
+
+#!/bin/bash
+#PBS -lwalltime=09:00:00
+#PBS -lselect=1:ncpus=127:mem=900gb
+
+cd "$PBS_O_WORKDIR"
+
+echo "PWD is: $PWD"
+echo "PBS_O_WORKDIR is: $PBS_O_WORKDIR"   #not necessary, just to check where the working directory is in case files are gone missing. 
+
+module load miniforge/3
+eval "$(/rds/general/user/xl1720/home/miniforge3/bin/conda shell.bash hook)"
+conda activate base  #bowtie2 was downloaded into the base environment. If in different environment activate the environment bowtie2 is in. 
+
+REF="/rds/general/project/diantonio/live/tools/genomes/hg38_ucsc/hg38"
+
+read_1="$PBS_O_WORKDIR/trimmed_CL2_1_EKDL250035182-1A_23GKKKLT4_L7.1.fq"
+read_2="$PBS_O_WORKDIR/trimmed_CL2_1_EKDL250035182-1A_23GKKKLT4_L7.2.fq"
+
+sample_name=$(basename "$read_1" | sed 's/\.1\.fq$//')
+echo $sample_name
+
+bowtie2 -x $REF -1 "$read_1" -2 "$read_2" -S "aligned_${sample_name}.sam" 2> "summary_${sample_name}.txt"
