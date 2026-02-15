@@ -22,3 +22,28 @@ sample_name=$(basename "$read_1" | sed 's/\.1\.fq$//')
 echo $sample_name
 
 bowtie2 -x $REF -1 "$read_1" -2 "$read_2" -S "aligned_${sample_name}.sam" 2> "summary_${sample_name}.txt"
+
+#Alignment for multiple files (loop through all fq files in the folder)
+#!/bin/bash
+#PBS -lwalltime=30:00:00   #Can change the walltime depending on number of files running
+#PBS -lselect=1:ncpus=128:mem=900gb   #choose job type depending on number of files running. Alignment takes a lot of time so can choose more cpu to get faster.
+cd "$PBS_O_WORKDIR"
+
+module load miniforge/3
+eval "$(/rds/general/user/xl1720/home/miniforge3/bin/conda shell.bash hook)"
+conda activate base
+
+REF="/rds/general/project/diantonio/live/tools/genomes/hg38_ucsc/hg38"
+
+READ_DIR="/rds/general/project/diantonio/live/Chelsie/CTR_astro_sequencing_270126/X204SC25120570-Z01-F001/01.RawData/All_tech_reps/trimmed"
+
+for read_1 in "$READ_DIR"/*.1.fq
+do
+read_2="${read_1/.1.fq/.2.fq}"  #take the corresponding read 2 file. Note here the file must end in .1.fq
+echo $read_2  #check if it's the correct file
+
+sample_name=$(basename "$read_1" | sed 's/\.1\.fq$//')  #extract file name before .1.fq as output file name
+echo $sample_name
+
+bowtie2 -x $REF -1 "$read_1" -2 "$read_2" -S "aligned_${sample_name}.sam" 2> "summary_${sample_name}.txt"
+done
