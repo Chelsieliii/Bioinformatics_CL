@@ -17,6 +17,11 @@ eval "$(/rds/general/user/xl1720/home/miniforge3/bin/conda shell.bash hook)"
 conda activate base
 #There should be a (base) before each line of command now. 
 
+#install samtools (after activating conda)
+conda create -n align_env -c bioconda -c conda-forge samtools  #samtools was installed under environment align_env
+#to activate samtools use conda activate align_env
+
+
 #to check if something exists
 which thing
 thing --version
