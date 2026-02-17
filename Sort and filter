@@ -63,3 +63,6 @@ RGSM="$name"
 echo "added rg"
 
 done
+
+#check if read groups were successfully added after
+samtools view -H filename.sort.bam | grep '^@RG'
