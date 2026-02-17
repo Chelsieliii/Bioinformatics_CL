@@ -66,3 +66,49 @@ done
 
 #check if read groups were successfully added after
 samtools view -H filename.sort.bam | grep '^@RG'
+
+#Deduplication, remove blackblisted region and indexing
+#for one file
+#!/bin/bash
+#PBS -lwalltime=72:00:00
+#PBS -lselect=1:ncpus=64:mem=450gb  #Here one job takes ~10 min, use the medium queue
+
+set -e
+cd "$PBS_O_WORKDIR"
+module load miniforge/3
+eval "$(/rds/general/user/xl1720/home/miniforge3/bin/conda shell.bash hook)"
+conda activate align_env
+
+test_sample="$PBS_O_WORKDIR/rg_changed_aligned_trimmed_CL2_1_EKDL250035182-1A_23GKKKLT4_L7.sort.bam"
+name=`basename $test_sample .sort.bam` 
+echo $name
+picard MarkDuplicates -REMOVE_DUPLICATES TRUE -I $test_sample -O $name.dedup.sort.bam -M $name.metrics.txt
+echo "remove duplicates"
+bedtools intersect -v -abam $name.dedup.sort.bam -b '/rds/general/project/diantonio/live/tools/blacklisted_regions/hg38-blacklist.v2.bed' > $name.bl.dedup.sort.bam
+echo "remove blacklist"
+samtools index $name.bl.dedup.sort.bam
+echo "index bam file"
+rm $name.bam $name.sort.bam $name.dedup.sort.bam
+echo "remove process files"
+#Check the metrics txt file afterwards for percent_duplicates, it should be 0. 
+
+#To check if there's still duplicate left in the file. 
+samtools view -F 1024 samplename.bl.dedup.sort.bam | wc -l
+
+#If still duplicates left, deduplicate for the second time
+#!/bin/bash
+#PBS -lwalltime=72:00:00
+#PBS -lselect=1:ncpus=64:mem=450gb  #medium queue
+set -e
+cd "$PBS_O_WORKDIR"
+module load miniforge/3
+eval "$(/rds/general/user/xl1720/home/miniforge3/bin/conda shell.bash hook)"
+conda activate align_env
+
+test_sample="$PBS_O_WORKDIR/rg_changed_aligned_trimmed_CL2_1_EKDL250035182-1A_23GKKKLT4_L7.bl.dedup.sort.bam"
+name=`basename $test_sample .bl.dedup.sort.bam`
+echo $name
+picard MarkDuplicates -REMOVE_DUPLICATES TRUE -I $test_sample -O $name.dedup2.bl.dedup.sort.bam -M $name.dedup2.metrics.txt
+echo "remove duplicate again"
+samtools index $name.dedup2.bl.dedup.sort.bam
+echo "sort done"
