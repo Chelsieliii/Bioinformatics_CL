@@ -31,3 +31,35 @@ picard AddOrReplaceReadGroups \
     -RGSM "$name"
 #Here we add a step of add read groups to the bam file. This is required for picard remove duplicates to recognise the files. 
 #If samples are treated separately (i.e.not technical replicates), RGID, RGLB, and RGSM need to be unique for each file.
+
+#Loop through all sam files in the folder--sort and add read groups
+#!/bin/bash
+#PBS -lwalltime=09:00:00
+#PBS -lselect=1:ncpus=127:mem=900gb
+
+module load miniforge/3
+eval "$(/rds/general/user/xl1720/home/miniforge3/bin/conda shell.bash hook)"
+conda activate align_env
+
+set -e
+cd $PBS_O_WORKDIR
+
+for file in $PBS_O_WORKDIR/*.sam
+do
+name=`basename $file .sam` 
+echo $name
+samtools view -F 2308 -b -q 10 "$file" > $name.bam
+echo "sam to bam done"
+samtools sort -o "$name.sort.bam" -T "temp_$name" "$name.bam"
+echo "sort done"
+picard AddOrReplaceReadGroups \
+I="$name.sort.bam" \
+O="rg_added_$name.sort.bam" \
+RGID="$name" \
+RGLB="$name" \
+RGPL=ILLUMINA \
+RGPU=unit1 \
+RGSM="$name"
+echo "added rg"
+
+done
