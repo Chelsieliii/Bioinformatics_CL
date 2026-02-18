@@ -112,3 +112,27 @@ picard MarkDuplicates -REMOVE_DUPLICATES TRUE -I $test_sample -O $name.dedup2.bl
 echo "remove duplicate again"
 samtools index $name.dedup2.bl.dedup.sort.bam
 echo "sort done"
+
+#for multiple files
+#!/bin/bash
+#PBS -lwalltime=30:00:00
+#PBS -lselect=1:ncpus=128:mem=900gb
+set -e
+cd "$PBS_O_WORKDIR"
+module load miniforge/3
+eval "$(/rds/general/user/xl1720/home/miniforge3/bin/conda shell.bash hook)"
+conda activate align_env
+mkdir -p $PBS_O_WORKDIR/tmp  #Make a new temporary folder where the files would be run inside. This is necessary because otherwise the disk storage would be full and job will crash. 
+for file in $PBS_O_WORKDIR/rg_added_*.sort.bam
+do
+name=`basename $file .sort.bam`
+echo $name
+picard MarkDuplicates -REMOVE_DUPLICATES TRUE -I "$file" -O "$name.dedup.sort.bam" -M "$name.metrics.txt" -TMP_DIR "PBS_O_WORKDIR/tmp"  #Tell picard to run inside tmp folder.
+echo "remove duplicates"
+bedtools intersect -v -abam "$name.dedup.sort.bam" -b '/rds/general/project/diantonio/live/tools/blacklisted_regions/hg38-blacklist.v2.bed' > "$name.bl.dedup.sort.bam"
+echo "remove blacklist"
+samtools index "$name.bl.dedup.sort.bam"
+echo "index bam file"
+rm "$name.sort.bam" "$name.dedup.sort.bam"
+echo "remove process files"
+done
