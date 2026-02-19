@@ -93,7 +93,7 @@ echo "remove process files"
 #Check the metrics txt file afterwards for percent_duplicates, it should be 0. 
 
 #To check if there's still duplicate left in the file. 
-samtools view -F 1024 samplename.bl.dedup.sort.bam | wc -l
+samtools view -f 1024 samplename.bl.dedup.sort.bam | wc -l
 
 #If still duplicates left, deduplicate for the second time
 #!/bin/bash
