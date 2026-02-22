@@ -22,6 +22,9 @@ conda create -n align_env -c bioconda -c conda-forge samtools bedtools deeptools
 #They were installed together under environment align_env
 #to activate use conda activate align_env
 
+#Install macs2 with numpy 1.24 (an older version of numpy. Macs2 is not designed for newer version of numpy and it will cause error when calling peaks)
+conda create -n macs2_np1.24 python=3.10 numpy=1.24 macs2 -c bioconda
+conda activate macs2_np1.24 #to activate
 
 #to check if something exists
 which thing
