@@ -1,0 +1,12 @@
+#Call peaks using macs2. This is done one by one through separate jobs.
+#!/bin/bash
+#PBS -lwalltime=24:00:00
+#PBS -lselect=1:ncpus=128:mem=900gb
+set -e
+cd "$PBS_O_WORKDIR"
+module load miniforge/3
+eval "$(/rds/general/user/xl1720/home/miniforge3/bin/conda shell.bash hook)"
+conda activate macs2_np1.24
+macs2 callpeak -t "/rds/general/project/diantonio/live/Chelsie/path/to/rg_added_aligned_trimmed_CL2_1_EKDL250035182-1A_23GKKKLT4_L7.dedup2.bl.dedup.sort.bam" -c "/rds/general/project/diantonio/live/Chelsie/path/to/rg_added_aligned_trimmed_CL2_INP_EKDL250035181-1A_23GKKKLT4.dedup2.bl.dedup.sort.bam" -f BAMPE -g hs -n "output_filename" --outdir "/rds/general/project/diantonio/live/Chelsie/pathtooutputfolder" -q 0.05
+echo "run call peak"
+#-t file to call peaks on; -c input file (control file); -f BAMPE paired end mode; -g hs human genome; --outdir specify which folder to output files to. Need to create folder beforehand!; -q 0.05 set the qvalue cutoff to q<=0.05
