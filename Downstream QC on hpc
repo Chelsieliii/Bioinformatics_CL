@@ -1,0 +1,7 @@
+#Calculate FRiP score
+#Count total mapped reads
+samtools view -c -f 66 -F 1804 sample.bam
+#-c count reads, -f 66: keep only reads that are properly paired + first in pair, -F 1804 exclude duplicates, unmapped, secondary alignment, QC fail. 
+#Count reads that overlap with peak regions
+bedtools intersect -u -a sample.bam -b sample_peaks.narrowPeak | samtools view -c -f 66 -F 1804
+#number output from second command divided by first command will give FRiP score. For ChIP, <0.01: weak enrichment, 0.01-0.03 acceptable, 0.03-0.1 good, >0.1 strong (from chatGPT)
