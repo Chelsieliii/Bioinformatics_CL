@@ -1,0 +1,56 @@
+#Create PCA plot
+cat *.narrowPeak | cut -f1-3 | sort -k1,1 -k2,2n | bedtools merge > consensus_peaks.bed
+#create a collective peak set from all narrowPeak files. cut -f1-3 keeps only the first 3 columns (chr, start, end). sort -k1,1 -k2,2n sort all peaks by coordinate.
+#bedtools merge: merge overlapping or adjacent peaks after cat. The consensus peaks (or collective peak) file is needed so that all samples are compared against this file. (?)
+#convert bed to saf file for featureCounts
+awk 'BEGIN{OFS="\t"} {print "peak_"NR,$1,$2,$3,"+"}' consensus_peaks.bed > consensus_peaks.saf
+featureCounts -p -B -a consensus_peaks.saf -F SAF -o counts.txt -T 8 path/to/bam/files/*.dedup2.bl.dedup.sort.bam  #Note to not loop through the INP files. If did, remove the columns afterwards.
+#-F tells fc that annotation file is in SAF format. -T 8 number of threads to use. -p count paired-end fragments, -B count only properly matched reads
+
+#In Rstudio
+library(DESeq2)
+library(ggplot2)
+library (ggrepel)
+counts <- read.table("counts.txt", header=TRUE, row.names=1, check.names=FALSE)  #can manually change column name before importing from counts.txt as the filename is pretty long.
+count_cols <- 7:ncol(counts) #only keep columns from the 7th (which is where the read count starts)
+dds <- DESeqDataSetFromMatrix(countData=counts,
+                              colData=data.frame(row.names=colnames(counts)),
+                              design=~1)  #normalise with deseq2
+vsd <- vst(dds, blind=TRUE)
+pca_data <- prcomp(t(assay(vsd)))
+sample_names <- colnames(counts)
+bio_rep <- sub("_.*","", sample_names)  #Since the samples are names CL2_1, CL2_2..., This keeps CL2 and get rid of the other part so we can mark bio rep on PCA.
+pca_df <- data.frame(PC1 = pca_data$x[,1],
+                     PC2 = pca_data$x[,2],
+                     Sample = sample_names,
+                     BioRep = bio_rep))
+ggplot(pca_df, aes(x = PC1, y = PC2, color = BioRep)) +
+  geom_point(size = 2.5) +   #dot size
+  geom_text_repel(aes(label = Sample),
+            vjust = -0.7,
+            size = 3, show.legend = FALSE) +
+theme_minimal() +
+  xlab(paste0("PC1 (", round(100*summary(pca_data)$importance[2,1],1), "%)")) +
+  ylab(paste0("PC2 (", round(100*summary(pca_data)$importance[2,2],1), "%)")) +
+  ggtitle("PCA of G4 ChIP-seq Samples") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    legend.title = element_blank()
+  )
+
+#Create heatmap (sample-sample correlation)
+library(pheatmap)
+my_colors <- colorRampPalette(c("blue", "white", "red"))(100)
+#with clustering
+pheatmap(cor_matrix,
+         color = my_colors,
+         breaks = seq(0, 1, length.out = 101),
+         clustering_distance_rows = "euclidean",
+         clustering_distance_cols = "euclidean",
+         clustering_method = "complete")
+#without clustering
+pheatmap(cor_matrix,
+         cluster_rows = FALSE,
+         cluster_cols = FALSE,
+         color = my_colors,
+         breaks = seq(0,1,length.out=101))
