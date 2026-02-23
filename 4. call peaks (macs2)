@@ -17,3 +17,6 @@ awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, $5, $6}' input.narrowPeak > output.
 
 #Convert INPUT bam file to bed file (for MEME analysis)
 #First sort bam file in name order, previously sorted in coordinate order
+
+#Convert narrowPeak to fa file (fa file includes sequences of the peak instead of just the position) (used in MEME analysis)
+bedtools getfasta -fi /rds/general/project/diantonio/live/tools/genomes/hg38_ucsc/hg38.fa -bed inputfile.narrowPeak -fo outputfile.fa 
