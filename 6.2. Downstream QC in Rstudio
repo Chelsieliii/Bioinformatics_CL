@@ -54,3 +54,17 @@ pheatmap(cor_matrix,
          cluster_cols = FALSE,
          color = my_colors,
          breaks = seq(0,1,length.out=101))
+
+#Venn diagram of overlapped peaks
+library(VennDiagram)
+draw.pairwise.venn(
+  area1 = numberofpeaks,
+  area2 = numberofpeaks,
+  cross.area = numberofpeaks,
+  category = c("Set A", "Set B"),
+  fill = c("#4DBBD5", "#E64B35"),
+  alpha = 0.6,
+  cex = 1.5,  #font size
+  cat.cex = 1.5  #catergory size
+  cat.dist = c(0.06, 0.06)   #distance of category name from the circles
+)
