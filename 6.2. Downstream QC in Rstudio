@@ -68,3 +68,17 @@ draw.pairwise.venn(
   cat.cex = 1.5  #catergory size
   cat.dist = c(0.06, 0.06)   #distance of category name from the circles
 )
+
+
+#Create venn diagram for 2 sets
+pdf("venn.pdf", width=6, height=5)
+grid.newpage()
+venn.plot <- draw.pairwise.venn(area1=30482, area2=113787, cross.area = 19455, category = c("BioRep6_1","BioRep6_2"), fill = c("#EE82EE", "#D8BFD8"), alpha = 0.5, lty = "blank", cex = 1.2, cat.cex = 1.3, cat.pos = c(210,150),cat.dist = c(0.04, 0.04))
+#insert number of areas in area, cat.pos() is the angle of labels relative to the circle. cat. dist gives distance of labels from circle. 
+dev.off()
+#This code automatically saves the graph into pwd. Remember to set current working directory beforehand. Remember to change filename after saved otherwise it will be overrided. 
+
+#Create venn diagram for 3 sets
+pdf("venn_3sets.pdf", width = 6, height = 5)
+grid.newpage()
+draw.triple.venn(area1=23763,area2=23004,area3=23386,n12=15140,n23=16154,n13=16741,n123=12569,category = c("BioRep2","BioRep5","BioRep6"), fill = c("#F88379","#87CEEB","#EE82EE"),alpha=0.5,lty="blank",cex=1.2,cat.cex=1.3,cat.pos=c(330,30,180),cat.dist=c(0.05,0.05,0.04))
