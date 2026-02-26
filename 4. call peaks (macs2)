@@ -24,4 +24,4 @@ bedtools getfasta -fi /rds/general/project/diantonio/live/tools/genomes/hg38_ucs
 #Intersection of files 
 bedtools multiinter -i CL2_dedup2_shared_peaks.narrowPeak CL3_dedup2_shared_peaks.narrowPeak CL5_dedup2_shared_peaks.narrowPeak | awk '$4 >= 2' OFS="\t" > shared_peak_CL235_peakinatleast2_unmerged.narrowPeak
 #awk part determines how many files do the peaks need to appear. After multiinter peaks need to be merged. 
-bedtools merge inputfile.narrowPeak > outputfile.narrowPeak
+bedtools merge -i inputfile.narrowPeak > outputfile.narrowPeak
