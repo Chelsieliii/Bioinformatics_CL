@@ -5,3 +5,42 @@ samtools view -c -f 66 -F 1804 sample.bam
 #Count reads that overlap with peak regions
 bedtools intersect -u -a sample.bam -b sample_peaks.narrowPeak | samtools view -c -f 66 -F 1804
 #number output from second command divided by first command will give FRiP score. For ChIP, <0.01: weak enrichment, 0.01-0.03 acceptable, 0.03-0.1 good, >0.1 strong (from chatGPT)
+
+#Plot correlation heatmap or PCA plot for sample correlation using deeptools.
+#First need to generate a matrix of read counts for samples using multiBamSummary
+#!/bin/bash
+#PBS -lwalltime=24:00:00
+#PBS -lselect=1:ncpus=128:mem=900gb
+set -e
+cd "$PBS_O_WORKDIR"
+module load miniforge/3
+eval "$(/rds/general/user/xl1720/home/miniforge3/bin/conda shell.bash hook)"
+conda activate align_env
+multiBamSummary bins -bs 500 \
+                    --bamfiles rg_added_*.dedup2.bl.dedup.sort.bam \  #loops through all the files in folder
+                    -o multibam_results_bin500.npz \
+                    -l BioRep2_1 BioRep2_2 BioRep2_INP BioRep3_1 BioRep3_2 BioRep3_INP BioRep5_1 BioRep5_2 BioRep5_INP BioRep6_1 BioRep6_2 BioRep6_INP \ #Generate labels for the matrix column, this must match the order of files being called.
+                    --outRawCounts /rds/general/project/diantonio/live/Chelsie/CTR_astro_sequencing_270126/X204SC25120570-Z01-F001/01.RawData/All_tech_reps/QC/multibam_rawcounts_bin500.tab \  #output rawcount tab file
+                    --scalingFactors /rds/general/project/diantonio/live/Chelsie/CTR_astro_sequencing_270126/X204SC25120570-Z01-F001/01.RawData/All_tech_reps/QC/multibam_scalingfactor_bin500.tab \ #output scaling factor tab file
+                    --samFlagInclude 2 \  #include duplicates
+                    --maxFragmentLength 1000  #filter out fragment with lengths longer than 1000bp
+#If this code does not work delete all change line sign "\" and use space instead.
+
+#Plot correleation heatmap
+#!/bin/bash
+#PBS -lwalltime=24:00:00
+#PBS -lselect=1:ncpus=128:mem=900gb
+set -e
+cd "$PBS_O_WORKDIR"
+module load miniforge/3
+eval "$(/rds/general/user/xl1720/home/miniforge3/bin/conda shell.bash hook)"
+conda activate align_env
+plotCorrelation -in /rds/general/project/diantonio/live/Chelsie/CTR_astro_sequencing_270126/X204SC25120570-Z01-F001/01.RawData/All_tech_reps/trimmed/multibam_results_bin500.npz \ #The npz file generated from multibamsummary
+                -c pearson \ #normalisation method. There is also spearman. Check documentation for more detail.
+                -p heatmap \ #output format
+                -o correlation_heatmap_pearson_withclustering.pdf \ #output file name
+                -T "Correlation Heatmap for CTR Astrocytes G4 ChIP-seq (Pearson)" \ #Title name
+                --outFileCorMatrix correlation_matrix_pearson_withclustering.tab \ #generate an output matrix file
+                -min -1 \ #range of scale bar
+                -max 1 \
+                --plotNumbers #include correlation score on every square
