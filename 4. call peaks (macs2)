@@ -1,4 +1,4 @@
-#Call peaks using macs2. This is done one by one through separate jobs.
+#Call peaks using macs2. Below code is for doing one by one in separate jobs.
 #!/bin/bash
 #PBS -lwalltime=24:00:00
 #PBS -lselect=1:ncpus=128:mem=900gb
@@ -10,6 +10,38 @@ conda activate macs2_np1.24
 macs2 callpeak -t "/rds/general/project/diantonio/live/Chelsie/path/to/rg_added_aligned_trimmed_CL2_1_EKDL250035182-1A_23GKKKLT4_L7.dedup2.bl.dedup.sort.bam" -c "/rds/general/project/diantonio/live/Chelsie/path/to/rg_added_aligned_trimmed_CL2_INP_EKDL250035181-1A_23GKKKLT4.dedup2.bl.dedup.sort.bam" -f BAMPE -g hs -n "output_filename" --outdir "/rds/general/project/diantonio/live/Chelsie/pathtooutputfolder" -q 0.05
 echo "run call peak"
 #-t file to call peaks on; -c input file (control file); -f BAMPE paired end mode; -g hs human genome; --outdir specify which folder to output files to. Need to create folder beforehand!; -q 0.05 set the qvalue cutoff to q<=0.05
+#There are also other parameters to set, common ones are --keep-dup all. This is to keep all duplicates otherwise macs2 only count duplicate as once. Since we already deduplicated before, all duplicates should be real signals now. 
+
+#Too loop through all dedup2.bl.dedup.sort.bam files and find the corresponding INPUT files for calling peaks. 
+#!/bin/bash
+#PBS -lwalltime=24:00:00
+#PBS -lselect=1:ncpus=128:mem=900gb
+set -e
+cd "$PBS_O_WORKDIR"
+module load miniforge/3
+eval "$(/rds/general/user/xl1720/home/miniforge3/bin/conda shell.bash hook)"
+conda activate macs2_np1.24
+for chip in $PBS_O_WORKDIR/rg_added_*.dedup2.bl.dedup.sort.bam; do
+if [[ "$chip" == *"_INP"* ]]; then
+continue
+fi
+echo "Processing $chip"
+group=$(echo "$chip" | grep -o 'CL[0-9]\+')  #Note that the filename need to contain CL3, CL5, numbers like this. This line searches through CL0 to CL9 to find corresponding files. 
+if [[ -z "$group" ]]; then
+        echo "No CL group found in $chip — skipping"
+        continue
+    fi
+control=$(ls rg_added_*${group}_INP*.bam 2>/dev/null | head -n 1)
+if [[ -z "$control" ]]; then
+        echo "No control found for $chip (expected ${group}_INP) — skipping"
+        continue
+fi
+sample=$(basename "$chip" .dedup2.bl.dedup.sort.bam)
+sample=${sample#rg_added_aligned_trimmed_}
+sample=${sample}_bam_keepdupall_q0.05  #modifies the output file name
+echo "Using control: $control"
+macs2 callpeak -t "$chip" -c "$control" -f BAM --keep-dup all  -g hs -n "$sample" -q 0.05 --outdir "/rds/general/project/diantonio/live/Chelsie/CTR_astro_sequencing_270126/X204SC25120570-Z01-F001/01.RawData/All_tech_reps/call_peak"
+done
 
 #Convert narrowPeak files to bed files
 awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, $5, $6}' input.narrowPeak > output.bed
