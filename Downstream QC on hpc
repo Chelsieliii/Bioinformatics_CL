@@ -25,6 +25,7 @@ multiBamSummary bins -bs 500 \
                     --samFlagInclude 2 \  #include duplicates
                     --maxFragmentLength 1000  #filter out fragment with lengths longer than 1000bp
 #If this code does not work delete all change line sign "\" and use space instead.
+#Documentation: https://deeptools.readthedocs.io/en/latest/content/tools/multiBamSummary.html
 
 #Plot correleation heatmap
 #!/bin/bash
@@ -44,3 +45,40 @@ plotCorrelation -in /rds/general/project/diantonio/live/Chelsie/CTR_astro_sequen
                 -min -1 \ #range of scale bar
                 -max 1 \
                 --plotNumbers #include correlation score on every square
+#Documentation: https://deeptools.readthedocs.io/en/latest/content/tools/plotCorrelation.html#hierarchical-clustering
+
+#Plot PCA plot
+#!/bin/bash
+#PBS -lwalltime=24:00:00
+#PBS -lselect=1:ncpus=128:mem=900gb
+set -e
+cd "$PBS_O_WORKDIR"
+module load miniforge/3
+eval "$(/rds/general/user/xl1720/home/miniforge3/bin/conda shell.bash hook)"
+conda activate align_env
+plotPCA -in /rds/general/project/diantonio/live/Chelsie/CTR_astro_sequencing_270126/X204SC25120570-Z01-F001/01.RawData/All_tech_reps/trimmed/multibam_results_bin500.npz \ #The npz file from multibamsummary
+        --transpose \
+        -o PCA_plot_deeptools.pdf \
+        -T "PCA Plot for CTR Astrocytes G4 ChIP-seq" \
+        --log2 \ #log2 transform the datapoints to avoid negative values
+        --colors "#D15452" "#D15452" "#D15452" "#7DDF4B" "#7DDF4B" "#7DDF4B" "#6FC7CF" "#6FC7CF" "#6FC7CF" "#A72CFD" "#A72CFD" "#A72CFD" \ #define colours for each datapoints. Note this must match the order of columns in matrix file.
+        --markers 'o' 'o' '<' 'o' 'o' '<' 'o' 'o' '<' 'o' 'o' '<'
+#documentation: https://deeptools.readthedocs.io/en/latest/content/tools/plotPCA.html
+
+#Convert bam to bigwig for track visualisation using bamCoverage
+#!/bin/bash
+#PBS -lwalltime=24:00:00
+#PBS -lselect=1:ncpus=128:mem=900gb
+set -e
+cd "$PBS_O_WORKDIR"
+module load miniforge/3
+eval "$(/rds/general/user/xl1720/home/miniforge3/bin/conda shell.bash hook)"
+conda activate align_env
+for file in /rds/general/project/diantonio/live/Chelsie/CTR_astro_sequencing_270126/X204SC25120570-Z01-F001/01.RawData/All_tech_reps/trimmed/rg_added_*.dedup2.bl.dedup.sort.bam; do
+sample=$(basename "$file" .dedup2.bl.dedup.sort.bam)
+sample=${sample#rg_added_aligned_trimmed_}
+sample=${sample}_bamcoverage.bw  #changes sample name
+bamCoverage -b "$file" -o "$sample" -of bigwig -bs 25 -bl "/rds/general/project/diantonio/live/tools/blacklisted_regions/hg38-blacklist.v2.bed" --effectiveGenomeSize 2913022398 --normalizeUsing RPGC --maxFragmentLength 1000 --minMappingQuality 30
+done
+#bin size 25 requires less cpu but bin size 10 will give better resolution. -bl blacklisted region, other parameters are standard for ChIP-seq.
+#documentation: https://deeptools.readthedocs.io/en/develop/content/tools/bamCoverage.html
