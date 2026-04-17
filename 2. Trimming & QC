@@ -1,4 +1,17 @@
 
+#First create a txt file containing all the sample names
+echo "name1 name2 name3 name4" > samplename.txt
+
+#Trim the adaptors using fastp. Fastp automatically detects adaptors for PE and trim them.
+#PBS -lwalltime=08:00:00
+#PBS -lselect=1:ncpus=128:mem=900gb
+module load miniforge/3
+for name in $(cat $PBS_O_WORKDIR/samplename.txt)
+do
+/rds/general/user/xl1720/home/anaconda3/bin/fastp -i $PBS_O_WORKDIR/$name.1.fq.gz -I $PBS_O_WORKDIR/$name.2.fq.gz -o trimmed_$name.1.fq.gz -O trimmed_$name.2.fq.gz --detect_adapter_for_pe -l 20 -j $name.fastp.json -h $name.fastp.html
+done
+
+
 #After trimming, check adaptor content with fastQC.
 
 #!/bin/bash
