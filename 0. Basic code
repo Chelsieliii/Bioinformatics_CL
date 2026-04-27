@@ -1,0 +1,29 @@
+#to log into hpc, open terminal
+ssh xl1720@login.cx3.hpc.imperial.ac.uk
+#enter password. The password won't show when you are entering but you are indeed typing.
+
+#to navigate in folders
+cd ../  #go back one folder
+cd project/path #go to the folder in the path
+ls  #list all files in the current folder
+
+#Create jobs
+vim jobname.pbs  #vim means open file
+#This will take to the page to create job. 
+#Press i (insert), then set runtime and parameters for hpc (Follow hpc user guideline).
+#After typing all codes, press esc, then type :wq! to save and exit job. This will take you back to the main page.
+
+#submit jobs and check job status
+qsub jobname.pbs  #This will submit job and give a job number
+qstat -u $USER  #to check status of all jobs submitted
+#Every job will come with an e (error) file and an o (output) file. Use vim to open the files (in current folder) to check error if a job was wiped or suddenly disappeared
+#(E file does not necessarily mean the job has error)
+:q!  #To just quit the job without saving changes
+
+#Download files from public URL
+wget -O output_filename "http://example.com/path/to/file"
+#To download multiple files at once: put all links in a txt file. 
+wget -i links.txt
+
+#To check sequence length (or other sequence info) of sequence file—use fastqc
+fastqc your_reads.fastq.gz 
