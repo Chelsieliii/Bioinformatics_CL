@@ -34,3 +34,10 @@ cat file1.fq file2.fq > outputfilename.fq
 #To copy file or folder to another folder (Note that for directory there is / after, while for file there should be no / after)
 cp -r /path/to/source_folder /path/to/destination/
 cp -r /path/to/source_file /path/to/destination/
+
+#To check all environments in conda 
+conda env list
+#To check if certain tools exist
+conda avail
+#To check all tools under certain environment
+conda list -n your_env_name
