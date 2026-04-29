@@ -27,3 +27,10 @@ wget -i links.txt
 
 #To check sequence length (or other sequence info) of sequence file—use fastqc
 fastqc your_reads.fastq.gz 
+
+#To merge two read files of same samples together (Have to be the same read type and both compressed or uncompressed)
+cat file1.fq file2.fq > outputfilename.fq
+
+#To copy file or folder to another folder (Note that for directory there is / after, while for file there should be no / after)
+cp -r /path/to/source_folder /path/to/destination/
+cp -r /path/to/source_file /path/to/destination/
