@@ -5,23 +5,30 @@ echo "name1 name2 name3 name4" > samplename.txt
 #Trim the adaptors using fastp. Fastp automatically detects adaptors for PE and trim them.
 #PBS -lwalltime=08:00:00
 #PBS -lselect=1:ncpus=128:mem=900gb
+cd $PBS_O_WORKDIR #to instruct pbs to run the job in current working directory. If you cannot find your output files it would be helpful to add this line. 
 module load miniforge/3
 for name in $(cat $PBS_O_WORKDIR/samplename.txt)
 do
 /rds/general/user/xl1720/home/anaconda3/bin/fastp -i $PBS_O_WORKDIR/$name.1.fq.gz -I $PBS_O_WORKDIR/$name.2.fq.gz -o trimmed_$name.1.fq.gz -O trimmed_$name.2.fq.gz --detect_adapter_for_pe -l 20 -j $name.fastp.json -h $name.fastp.html
 done
 
+#Unzip the trimmed files
+#PBS -lwalltime=08:00:00
+#PBS -lselect=1:ncpus=128:mem=900gb
+cd $PBS_O_WORKDIR
+for file in $PBS_O_WORKDIR/*.gz
+do 
+gunzip "$file"
+done
 
-#After trimming, check adaptor content with fastQC.
+#After unzipping, check adaptor content with fastQC.
 
 #!/bin/bash
 #PBS -lwalltime=08:00:00
 #PBS -lselect=1:ncpus=128:mem=900gb
-
 module load miniforge/3
 conda activate base
-cd $PBS_O_WORKDIR   #to instruct pbs to run the job in current working directory.
-
+cd $PBS_O_WORKDIR
 mkdir -p fastqc_output   #make a folder called fastqc_output, -p = don't throw error if the folder already exists
-for file in *.fq do fastqc "$file" -d $TMPDIR -o fastqc_output  
+for file in $PBS_O_WORKDIR/*.fq do fastqc "$file" -d $TMPDIR -o fastqc_output  
 done
