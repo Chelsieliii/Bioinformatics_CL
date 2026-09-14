@@ -29,3 +29,11 @@ conda activate macs2_np1.24 #to activate
 #to check if something exists
 which thing
 thing --version
+
+#Check md5 code of file (generate md5 and compare manually)
+md5sum filename.filetype
+#Or if there is already a file that contains MD5 #filename. 
+md5sum -c MD5file.txt
+
+#To extract files from .tar file
+tar -xvf X204SC26086914-Z01-F001.tar
