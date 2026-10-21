@@ -14,8 +14,8 @@ set -e  #this stops the job when one command fails
 cd $PBS_O_WORKDIR
 
 filename="$PBS_O_WORKDIR/aligned_trimmed_CL2_1_EKDL250035182-1A_23GKKKLT4_L7.sam"
-name=`basename $filename .sam` 
-echo $name
+name=$(basename $filename .sam)
+echo "$name"
 
 samtools view -F 2308 -b -q 10 "$filename" > "$name.bam"
 echo "sam to bam done"
